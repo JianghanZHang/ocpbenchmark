@@ -16,7 +16,7 @@ def make_problem(problem_config):
     robot_type = problem_config['robot_type']
     problem_type = problem_config['problem_type']
     dt = problem_config['dt']
-    
+
     if robot_type == 'bipedal':
         talos_legs = example_robot_data.load("talos_legs")
         # Defining the initial state of the robot
@@ -69,6 +69,11 @@ def make_problem(problem_config):
                     GAITPHASES[problem_type]["stepKnots"],
                     GAITPHASES[problem_type]["supportKnots"],
                 )
+        else:
+            raise ValueError(f"Problem type '{problem_type}' not implemented.")
+        
+    else:
+        raise ValueError(f"Robot type '{robot_type}' not implemented.")
 
 
 
