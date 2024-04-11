@@ -1,0 +1,6 @@
+max_iter = 10000
+use_filter_line_search = False
+termination_tolerance = 1e-4
+max_qp_iters = 1000
+eps_abs = 1e-6
+eps_rel = 1e-6
