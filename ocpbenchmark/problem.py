@@ -7,15 +7,26 @@ from examples.biped import SimpleBipedGaitProblem
 import example_robot_data
 import pinocchio
 import numpy as np
+from utils import load_config_file
 
 def make_problem(problem_config):
-    initial_state = problem_config['initial_state']
-    initial_guess = problem_config['initial_guess']
-    horizon = problem_config['horizon']
-    weights = problem_config['weights']
-    robot_type = problem_config['robot_type']
-    problem_type = problem_config['problem_type']
-    dt = problem_config['dt']
+    """
+    input:
+        problem_config: str
+            The name of the problem configuration file.
+            
+    output:
+        problem: crocoddyl.ShootingProblem
+            The shooting problem instance.
+    """
+    config = load_config_file(problem_config)
+    initial_state = config['initial_state']
+    initial_guess = config['initial_guess']
+    horizon = config['horizon']
+    weights = config['weights']
+    robot_type = config['robot_type']
+    problem_type = config['problem_type']
+    dt = config['dt']
 
     if robot_type == 'bipedal':
         talos_legs = example_robot_data.load("talos_legs")
@@ -74,8 +85,8 @@ def make_problem(problem_config):
         
     else:
         raise ValueError(f"Robot type '{robot_type}' not implemented.")
-
-
+    
+    return problem
 
                 
 

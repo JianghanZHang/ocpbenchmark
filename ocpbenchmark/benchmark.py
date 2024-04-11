@@ -11,6 +11,9 @@ class benchmark:
         self.solver = None
         self.plotter = None
         self.data = None
+        
+        self.max_iter = None
+        self.inital_guess = None
 
     @staticmethod
     def make(problem_config, plotter_config, solver_config, data_config):
@@ -38,5 +41,11 @@ class benchmark:
         benchmark_callback = benchmark_callback(data_config)
         self.data = benchmark_callback.data
         self.solver.setCallbacks(benchmark_callback(data_config))
+
+    def run(self):
+        if self.solver is None:
+            raise ValueError("Solver is not set. Please set the solver first.")
+        self.solver.solve()
+        self.plotter.plot(self.data)
 
     

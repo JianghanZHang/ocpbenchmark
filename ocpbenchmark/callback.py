@@ -2,6 +2,9 @@ import crocoddyl
 from utils import load_config_file
 
 class benchmark_callback(crocoddyl.CallbackAbstract):
+    """
+    A callback class to record solver data.
+    """
     def __init__(self, data_config):
         super().__init__()
         self.config = load_config_file(data_config)
