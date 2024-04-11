@@ -3,7 +3,7 @@ Return a predefined shooting problem instance.
 """
 import crocoddyl
 import callback
-from problems.biped import SimpleBipedGaitProblem
+from examples.biped import SimpleBipedGaitProblem
 import example_robot_data
 import pinocchio
 import numpy as np
@@ -16,7 +16,7 @@ def make_problem(problem_config):
     robot_type = problem_config['robot_type']
     problem_type = problem_config['problem_type']
     dt = problem_config['dt']
-    stop = problem_config['stop']
+    
     if robot_type == 'bipedal':
         talos_legs = example_robot_data.load("talos_legs")
         # Defining the initial state of the robot
