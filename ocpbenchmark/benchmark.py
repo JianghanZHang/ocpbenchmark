@@ -11,9 +11,7 @@ class benchmark:
         self.solver = None
         self.plotter = None
         self.data = None
-        
-        self.max_iter = None
-        self.inital_guess = None
+        self.initial = None
 
     @staticmethod
     def make(problem_config, plotter_config, solver_config, data_config):
