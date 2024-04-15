@@ -32,6 +32,9 @@ class benchmark:
         if self.problem is None:
             raise ValueError("Problem is not set. Please set the problem first.")
         self.solver = solver.make_solver(self.problem, solver_config) 
+    
+    def set_initial(self, initial_config):
+        self.initial = initial_config
 
     def set_callback(self, data_config):
         if self.solver is None:
