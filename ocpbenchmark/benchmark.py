@@ -11,7 +11,9 @@ class benchmark:
         self.solver = None
         self.plotter = None
         self.data = None
-        self.initial = None
+        self.xs_init = None
+        self.us_init = None  
+        self.max_iter = None
 
     @staticmethod
     def make(problem_config, plotter_config, solver_config, data_config):
@@ -31,11 +33,8 @@ class benchmark:
     def set_solver(self, solver_config):
         if self.problem is None:
             raise ValueError("Problem is not set. Please set the problem first.")
-        self.solver = solver.make_solver(self.problem, solver_config) 
+        self.solver, self.max_iter, self.xs_init, self.us_init = solver.make_solver(self.problem, solver_config) 
     
-    def set_initial(self, initial_config):
-        self.initial = initial_config
-
     def set_callback(self, data_config):
         if self.solver is None:
             raise ValueError("Solver is not set. Please set the solver first.")
@@ -46,7 +45,12 @@ class benchmark:
     def run(self):
         if self.solver is None:
             raise ValueError("Solver is not set. Please set the solver first.")
-        self.solver.solve()
+        if self.problem is None:
+            raise ValueError("Problem is not set. Please set the problem first.")
+        if self.plotter is None:
+            raise ValueError("Plotter is not set. Please set the plotter first.")
+        
+        self.solver.solve(self.xs_init, self.us_init, self.max_iter)
         self.plotter.plot(self.data)
 
     

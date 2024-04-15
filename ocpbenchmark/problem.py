@@ -63,7 +63,7 @@ def make_problem(problem_config):
         
         if problem_type == "walking":
             # Creating a walking problem
-                return gait.createWalkingProblem(
+                problem = gait.createWalkingProblem(
                     x0,
                     GAITPHASES[problem_type]["stepLength"],
                     GAITPHASES[problem_type]["stepHeight"],
@@ -72,7 +72,7 @@ def make_problem(problem_config):
                     GAITPHASES[problem_type]["supportKnots"],
                 )
         elif problem_type == "jumping":
-             return gait.createJumpingProblem(
+             problem = gait.createJumpingProblem(
                     x0,
                     GAITPHASES[problem_type]["stepLength"],
                     GAITPHASES[problem_type]["stepHeight"],
@@ -87,6 +87,7 @@ def make_problem(problem_config):
         raise ValueError(f"Robot type '{robot_type}' not implemented.")
     
     return problem
+
 
                 
 
