@@ -11,6 +11,7 @@ class benchmark:
         self.solver = None
         self.plotter = None
         self.data = None
+        
         self.xs_init = None
         self.us_init = None  
         self.max_iter = None
@@ -20,13 +21,9 @@ class benchmark:
         benchmark = benchmark()
         benchmark.set_problem(problem_config)
         benchmark.set_solver(solver_config)
-        benchmark.set_plotter(plotter_config)
         benchmark.set_callback(data_config)
         return benchmark
         
-    def set_plotter(self, plotter_config):
-        self.plotter = plotter(plotter_config)
-
     def set_problem(self, problem_config):
         self.problem = problem.make_problem(problem_config) 
 
@@ -47,10 +44,8 @@ class benchmark:
             raise ValueError("Solver is not set. Please set the solver first.")
         if self.problem is None:
             raise ValueError("Problem is not set. Please set the problem first.")
-        if self.plotter is None:
-            raise ValueError("Plotter is not set. Please set the plotter first.")
         
         self.solver.solve(self.xs_init, self.us_init, self.max_iter)
-        self.plotter.plot(self.data)
+        return self.data
 
     
