@@ -12,7 +12,6 @@ class Benchmark_callback(crocoddyl.CallbackAbstract):
 
     def __call__(self, solver):
         import pdb; pdb.set_trace()
-        print('1234')
         for attr, solver_attr in self.config.items():
             # Check if the solver has the attribute. If not, raise an exception.
             if not hasattr(solver, solver_attr):

@@ -17,32 +17,38 @@ def make_solver(problem, solver_config):
     config = load_config_file(solver_config)
     if config['solver'] == 'csqp':
         solver = mim_solvers.SolverCSQP(problem)
-        solver.th_stop = config['termination_tolerance'] # SQP termination tolerance
+        solver.th_stop = float(config['termination_tolerance']) # SQP termination tolerance
         
         # QP termination tolerance
-        solver.eps_abs = config['eps_abs']
-        solver.eps_rel = config['eps_rel']
+        solver.eps_abs = float(config['eps_abs'])
+        solver.eps_rel = float(config['eps_rel'])
         
-        solver.use_filter_line_search = config['use_filter_line_search'] 
-        solver.setCallbacks()
+        solver.use_filter_line_search = bool(config['use_filter_line_search']) 
+
+        solver.with_callbacks = True
         
     else:
         raise ValueError(f"Solver '{config['solver']}' not implemented.")
     
+
+
+    # set initial guess
     T = problem.T
     if config['initial_guess'] == 'quasi-static':
-        xs_init = np.ones((T+1, problem.ndx)) * problem.x0
-        us_init = problem.quasiStatic(xs_init)
+
+        xs_init = [problem.x0]*(problem.T + 1)
+        us_init = problem.quasiStatic([problem.x0] * problem.T) 
 
     elif config['initial_guess'] == 'random':
-        xs_init = np.random.uniform(config['state_lb'], config['state_ub'], (T+1, problem.ndx))
+        xs_init = np.random.uniform(config['state_lb'], config['state_ub'], (T+1, problem.nx))
+        # for i, model in enumerate(problem.runningModels):
         us_init = np.random.uniform(config['control_lb'], config['control_ub'], (T, problem.nu))
 
     elif config['initial_guess'] == 'warm-start':
         
-        xs_init = np.ones((T+1, problem.ndx)) * problem.x0
-        us_init = problem.quasiStatic(xs_init)
-        
+        xs_init = [problem.x0]*(problem.T + 1)
+        us_init = problem.quasiStatic([problem.x0] * problem.T) 
+
         solver = mim_solvers.SolverCSQP(problem)
         solver.solve(xs_init, us_init, 10000)
         xs_init = list(solver.xs[1:]) + [solver.xs[-1]]
