@@ -6,7 +6,7 @@ import pinocchio
 import crocoddyl
 
 
-class SimpleQuadrupedalGaitProblem:
+class SimpleQuadrupedGaitProblem_hard_constraints:
     """Build simple quadrupedal locomotion problems.
 
     This class aims to build simple locomotion problems used in the examples of
@@ -655,9 +655,8 @@ class SimpleQuadrupedalGaitProblem:
             coneResidual = crocoddyl.ResidualModelContactFrictionCone(
                 self.state, i, cone, nu, self._fwddyn
             )
-            constraintFriction = crocoddyl.ConstraintModelResidual(
-                self.state, coneResidual, np.array([0.]), np.array([np.inf])
-            )
+            # A: 4 by 3; f: 3 by 1; r = A @ f
+            constraintFriction = crocoddyl.ConstraintModelResidual(self.state, coneResidual, np.array([0.]*4), np.array([np.inf]*4))
             constraintModelManager.addConstraint(self.rmodel.frames[i].name + "_frictionCone", constraintFriction)
  
         if swingFootTask is not None:
@@ -707,7 +706,6 @@ class SimpleQuadrupedalGaitProblem:
         constraintState = crocoddyl.ConstraintModelResidual(self.state, stateBoundsResidual, lb, ub)
         constraintModelManager.addConstraint("stateBounds", constraintState)
         
-
         # Creating the action model for the KKT dynamics with simpletic Euler
         # integration scheme
         if self._fwddyn:
@@ -718,6 +716,7 @@ class SimpleQuadrupedalGaitProblem:
             dmodel = crocoddyl.DifferentialActionModelContactInvDynamics(
                 self.state, self.actuation, contactModel, costModel, constraintModelManager
             )
+
         if self._control == "one":
             control = crocoddyl.ControlParametrizationModelPolyOne(nu)
         elif self._control == "rk4":
@@ -746,6 +745,7 @@ class SimpleQuadrupedalGaitProblem:
             )
         else:
             model = crocoddyl.IntegratedActionModelEuler(dmodel, control, timeStep)
+
         return model
 
     def createFootSwitchModel(self, supportFootIds, swingFootTask, pseudoImpulse=False):
@@ -800,7 +800,7 @@ class SimpleQuadrupedalGaitProblem:
                 self.state, i, cone, nu, self._fwddyn
             )
             constraintFriction = crocoddyl.ConstraintModelResidual(
-                self.state, coneResidual, np.array([0.]), np.array([np.inf])
+                self.state, coneResidual, np.array([0.] * 4), np.array([np.inf] * 4)
             )
             constraintModelManager.addConstraint(self.rmodel.frames[i].name + "_frictionCone", constraintFriction)
  
@@ -936,197 +936,3 @@ class SimpleQuadrupedalGaitProblem:
         model.JMinvJt_damping = JMinvJt_damping
         model.r_coeff = r_coeff
         return model
-
-
-def plotSolution(solver, bounds=True, figIndex=1, figTitle="", show=True):
-    import matplotlib.pyplot as plt
-
-    xs, us, cs = [], [], []
-    if bounds:
-        us_lb, us_ub = [], []
-        xs_lb, xs_ub = [], []
-
-    def updateTrajectories(solver):
-        xs.extend(solver.xs[:-1])
-        for m, d in zip(solver.problem.runningModels, solver.problem.runningDatas):
-            if hasattr(m, "differential"):
-                cs.append(d.differential.multibody.pinocchio.com[0])
-                us.append(d.differential.multibody.joint.tau)
-                if bounds and isinstance(
-                    m.differential, crocoddyl.DifferentialActionModelContactFwdDynamics
-                ):
-                    us_lb.extend([m.u_lb])
-                    us_ub.extend([m.u_ub])
-            else:
-                cs.append(d.multibody.pinocchio.com[0])
-                us.append(np.zeros(nu))
-                if bounds:
-                    us_lb.append(np.nan * np.ones(nu))
-                    us_ub.append(np.nan * np.ones(nu))
-            if bounds:
-                xs_lb.extend([m.state.lb])
-                xs_ub.extend([m.state.ub])
-
-    if isinstance(solver, list):
-        for s in solver:
-            rmodel = solver[0].problem.runningModels[0].state.pinocchio
-            nq, nv, nu = (
-                rmodel.nq,
-                rmodel.nv,
-                solver[0].problem.runningModels[0].differential.actuation.nu,
-            )
-            updateTrajectories(s)
-    else:
-        rmodel = solver.problem.runningModels[0].state.pinocchio
-        nq, nv, nu = (
-            rmodel.nq,
-            rmodel.nv,
-            solver.problem.runningModels[0].differential.actuation.nu,
-        )
-        updateTrajectories(solver)
-
-    # Getting the state and control trajectories
-    nx = nq + nv
-    X = [0.0] * nx
-    U = [0.0] * nu
-    if bounds:
-        U_LB = [0.0] * nu
-        U_UB = [0.0] * nu
-        X_LB = [0.0] * nx
-        X_UB = [0.0] * nx
-    for i in range(nx):
-        X[i] = [x[i] for x in xs]
-        if bounds:
-            X_LB[i] = [x[i] for x in xs_lb]
-            X_UB[i] = [x[i] for x in xs_ub]
-    for i in range(nu):
-        U[i] = [u[i] for u in us]
-        if bounds:
-            U_LB[i] = [u[i] for u in us_lb]
-            U_UB[i] = [u[i] for u in us_ub]
-
-    # Plotting the joint positions, velocities and torques
-    plt.figure(figIndex)
-    plt.suptitle(figTitle)
-    legJointNames = ["HAA", "HFE", "KFE"]
-    # LF foot
-    plt.subplot(4, 3, 1)
-    plt.title("joint position [rad]")
-    [plt.plot(X[k], label=legJointNames[i]) for i, k in enumerate(range(7, 10))]
-    if bounds:
-        [plt.plot(X_LB[k], "--r") for i, k in enumerate(range(7, 10))]
-        [plt.plot(X_UB[k], "--r") for i, k in enumerate(range(7, 10))]
-    plt.ylabel("LF")
-    plt.legend()
-    plt.subplot(4, 3, 2)
-    plt.title("joint velocity [rad/s]")
-    [
-        plt.plot(X[k], label=legJointNames[i])
-        for i, k in enumerate(range(nq + 6, nq + 9))
-    ]
-    if bounds:
-        [plt.plot(X_LB[k], "--r") for i, k in enumerate(range(nq + 6, nq + 9))]
-        [plt.plot(X_UB[k], "--r") for i, k in enumerate(range(nq + 6, nq + 9))]
-    plt.ylabel("LF")
-    plt.legend()
-    plt.subplot(4, 3, 3)
-    plt.title("joint torque [Nm]")
-    [plt.plot(U[k], label=legJointNames[i]) for i, k in enumerate(range(0, 3))]
-    if bounds:
-        [plt.plot(U_LB[k], "--r") for i, k in enumerate(range(0, 3))]
-        [plt.plot(U_UB[k], "--r") for i, k in enumerate(range(0, 3))]
-    plt.ylabel("LF")
-    plt.legend()
-
-    # LH foot
-    plt.subplot(4, 3, 4)
-    [plt.plot(X[k], label=legJointNames[i]) for i, k in enumerate(range(10, 13))]
-    if bounds:
-        [plt.plot(X_LB[k], "--r") for i, k in enumerate(range(10, 13))]
-        [plt.plot(X_UB[k], "--r") for i, k in enumerate(range(10, 13))]
-    plt.ylabel("LH")
-    plt.legend()
-    plt.subplot(4, 3, 5)
-    [
-        plt.plot(X[k], label=legJointNames[i])
-        for i, k in enumerate(range(nq + 9, nq + 12))
-    ]
-    if bounds:
-        [plt.plot(X_LB[k], "--r") for i, k in enumerate(range(nq + 9, nq + 12))]
-        [plt.plot(X_UB[k], "--r") for i, k in enumerate(range(nq + 9, nq + 12))]
-    plt.ylabel("LH")
-    plt.legend()
-    plt.subplot(4, 3, 6)
-    [plt.plot(U[k], label=legJointNames[i]) for i, k in enumerate(range(3, 6))]
-    if bounds:
-        [plt.plot(U_LB[k], "--r") for i, k in enumerate(range(3, 6))]
-        [plt.plot(U_UB[k], "--r") for i, k in enumerate(range(3, 6))]
-    plt.ylabel("LH")
-    plt.legend()
-
-    # RF foot
-    plt.subplot(4, 3, 7)
-    [plt.plot(X[k], label=legJointNames[i]) for i, k in enumerate(range(13, 16))]
-    if bounds:
-        [plt.plot(X_LB[k], "--r") for i, k in enumerate(range(13, 16))]
-        [plt.plot(X_UB[k], "--r") for i, k in enumerate(range(13, 16))]
-    plt.ylabel("RF")
-    plt.legend()
-    plt.subplot(4, 3, 8)
-    [
-        plt.plot(X[k], label=legJointNames[i])
-        for i, k in enumerate(range(nq + 12, nq + 15))
-    ]
-    if bounds:
-        [plt.plot(X_LB[k], "--r") for i, k in enumerate(range(nq + 12, nq + 15))]
-        [plt.plot(X_UB[k], "--r") for i, k in enumerate(range(nq + 12, nq + 15))]
-    plt.ylabel("RF")
-    plt.legend()
-    plt.subplot(4, 3, 9)
-    [plt.plot(U[k], label=legJointNames[i]) for i, k in enumerate(range(6, 9))]
-    if bounds:
-        [plt.plot(U_LB[k], "--r") for i, k in enumerate(range(6, 9))]
-        [plt.plot(U_UB[k], "--r") for i, k in enumerate(range(6, 9))]
-    plt.ylabel("RF")
-    plt.legend()
-
-    # RH foot
-    plt.subplot(4, 3, 10)
-    [plt.plot(X[k], label=legJointNames[i]) for i, k in enumerate(range(16, 19))]
-    if bounds:
-        [plt.plot(X_LB[k], "--r") for i, k in enumerate(range(16, 19))]
-        [plt.plot(X_UB[k], "--r") for i, k in enumerate(range(16, 19))]
-    plt.ylabel("RH")
-    plt.xlabel("knots")
-    plt.legend()
-    plt.subplot(4, 3, 11)
-    [
-        plt.plot(X[k], label=legJointNames[i])
-        for i, k in enumerate(range(nq + 15, nq + 18))
-    ]
-    if bounds:
-        [plt.plot(X_LB[k], "--r") for i, k in enumerate(range(nq + 15, nq + 18))]
-        [plt.plot(X_UB[k], "--r") for i, k in enumerate(range(nq + 15, nq + 18))]
-    plt.ylabel("RH")
-    plt.xlabel("knots")
-    plt.legend()
-    plt.subplot(4, 3, 12)
-    [plt.plot(U[k], label=legJointNames[i]) for i, k in enumerate(range(9, 12))]
-    if bounds:
-        [plt.plot(U_LB[k], "--r") for i, k in enumerate(range(9, 12))]
-        [plt.plot(U_UB[k], "--r") for i, k in enumerate(range(9, 12))]
-    plt.ylabel("RH")
-    plt.legend()
-    plt.xlabel("knots")
-
-    plt.figure(figIndex + 1)
-    plt.suptitle(figTitle)
-    Cx = [c[0] for c in cs]
-    Cy = [c[1] for c in cs]
-    plt.plot(Cx, Cy)
-    plt.title("CoM position")
-    plt.xlabel("x [m]")
-    plt.ylabel("y [m]")
-    plt.grid(True)
-    if show:
-        plt.show()

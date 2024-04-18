@@ -6,7 +6,7 @@ import pinocchio
 import crocoddyl
 
 
-class SimpleQuadrupedalGaitProblem:
+class SimpleQuadrupedGaitProblem_soft_constraints:
     """Build simple quadrupedal locomotion problems.
 
     This class aims to build simple locomotion problems used in the examples of
@@ -752,6 +752,7 @@ class SimpleQuadrupedalGaitProblem:
             )
         else:
             model = crocoddyl.IntegratedActionModelEuler(dmodel, control, timeStep)
+
         return model
 
     def createFootSwitchModel(self, supportFootIds, swingFootTask, pseudoImpulse=False):
