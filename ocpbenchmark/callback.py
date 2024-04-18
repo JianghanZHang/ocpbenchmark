@@ -1,7 +1,7 @@
 import crocoddyl
 from utils import load_config_file
 
-class benchmark_callback(crocoddyl.CallbackAbstract):
+class Benchmark_callback(crocoddyl.CallbackAbstract):
     """
     A callback class to record solver data.
     """
@@ -11,6 +11,8 @@ class benchmark_callback(crocoddyl.CallbackAbstract):
         self.data = {key: [] for key in self.config.keys()}
 
     def __call__(self, solver):
+        import pdb; pdb.set_trace()
+        print('1234')
         for attr, solver_attr in self.config.items():
             # Check if the solver has the attribute. If not, raise an exception.
             if not hasattr(solver, solver_attr):
@@ -18,3 +20,4 @@ class benchmark_callback(crocoddyl.CallbackAbstract):
             # Otherwise, record the attribute's value.
             value = getattr(solver, solver_attr)
             self.data[attr].append(value)
+        
