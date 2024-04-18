@@ -1,4 +1,3 @@
-iter : "get_iter"
 qp_iter : "qp_iters_"
 cost : "get_cost"
 merit : "get_merit"

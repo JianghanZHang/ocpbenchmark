@@ -1,0 +1,4 @@
+robot_type : 'quadrupedal'
+problem_type : 'walking'
+dynamics_type : 'fwd'
+constraints_type : 'hard'

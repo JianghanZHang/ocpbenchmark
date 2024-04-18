@@ -1,0 +1,4 @@
+robot_type : 'biped'
+problem_type : 'walking'
+dynamics_type : 'fwd'
+constraints_type : 'hard'

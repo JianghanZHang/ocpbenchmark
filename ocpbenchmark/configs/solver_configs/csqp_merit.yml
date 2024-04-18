@@ -1,5 +1,5 @@
 solver : csqp
-max_iter : 10000
+max_iter : 100
 use_filter_line_search : False
 termination_tolerance : 1e-4
 max_qp_iters : 1000
