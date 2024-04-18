@@ -4,6 +4,8 @@ Return a predefined shooting problem instance.
 import crocoddyl
 import callback
 from examples.biped import SimpleBipedGaitProblem
+from examples.quadruped_hard_constraints import SimpleQuadrupedGaitProblem_hard_constraints
+from examples.quadruped_soft_constraints import SimpleQuadrupedGaitProblem_soft_constraints
 import example_robot_data
 import pinocchio
 import numpy as np
@@ -20,28 +22,34 @@ def make_problem(problem_config):
             The shooting problem instance.
     """
     config = load_config_file(problem_config)
-    initial_state = config['initial_state']
-    initial_guess = config['initial_guess']
-    horizon = config['horizon']
-    weights = config['weights']
     robot_type = config['robot_type']
     problem_type = config['problem_type']
-    dt = config['dt']
+    dynamics_type = config['dynamics_type']
+    constraints_type = config['constraints_type']
 
     if robot_type == 'bipedal':
         talos_legs = example_robot_data.load("talos_legs")
         # Defining the initial state of the robot
-        q0 = talos_legs.model.referenceConfigurations[initial_state].copy()
+        q0 = talos_legs.model.referenceConfigurations["half_sitting"].copy()
         v0 = pinocchio.utils.zero(talos_legs.model.nv)
         x0 = np.concatenate([q0, v0])
 
         # Setting up the 3d walking problem
         rightFoot = "right_sole_link"
         leftFoot = "left_sole_link"
-        gait = SimpleBipedGaitProblem(talos_legs.model, rightFoot, leftFoot)
 
-        GAITPHASES = [
-            {
+        if dynamics_type == "inv":
+            raise ValueError(f"Dynamics type '{dynamics_type}' is not supported since the solver cannot deal with equality constraints.")
+            gait = SimpleBipedGaitProblem(talos_legs.model, rightFoot, leftFoot, fwddyn=False)
+
+        elif dynamics_type == "fwd":
+            gait = SimpleBipedGaitProblem(talos_legs.model, rightFoot, leftFoot, fwddyn=True)
+
+        else:
+            raise ValueError(f"Dynamics type '{dynamics_type}' not implemented.")
+
+
+        GAITPHASES = {
                 "walking": {
                     "stepLength": 0.6,
                     "stepHeight": 0.1,
@@ -49,8 +57,7 @@ def make_problem(problem_config):
                     "stepKnots": 35,
                     "supportKnots": 10,
                 }
-            },
-            {
+           ,
                 "jumping": {
                     "jumpHeight": 0.15,
                     "jumpLength": [0.0, 0.3, 0.0],
@@ -59,7 +66,7 @@ def make_problem(problem_config):
                     "flyingKnots": 20,
                 }
             }  
-        ]
+        
         
         if problem_type == "walking":
             # Creating a walking problem
@@ -82,11 +89,98 @@ def make_problem(problem_config):
                 )
         else:
             raise ValueError(f"Problem type '{problem_type}' not implemented.")
-        
+    
+    elif robot_type == 'quadrupedal':
+                
+        # Loading the anymal model
+        anymal = example_robot_data.load("anymal")
+
+        # Defining the initial state of the robot
+        q0 = anymal.model.referenceConfigurations["standing"].copy()
+        v0 = pinocchio.utils.zero(anymal.model.nv)
+        x0 = np.concatenate([q0, v0])
+
+        # Setting up the 3d walking problem
+        lfFoot, rfFoot, lhFoot, rhFoot = "LF_FOOT", "RF_FOOT", "LH_FOOT", "RH_FOOT"
+        if dynamics_type == "inv":
+            gait = SimpleQuadrupedGaitProblem_hard_constraints(
+                anymal.model, lfFoot, rfFoot, lhFoot, rhFoot, fwddyn=False
+            )
+        elif dynamics_type == "fwd":
+            gait = SimpleQuadrupedGaitProblem_hard_constraints(
+                anymal.model, lfFoot, rfFoot, lhFoot, rhFoot, fwddyn=True
+            )
+        else:
+            raise ValueError(f"Dynamics type '{dynamics_type}' not implemented.")
+
+        # Setting up all tasks
+        GAITPHASES ={
+                "walking": {
+                    "stepLength": 0.25,
+                    "stepHeight": 0.15,
+                    "timeStep": 1e-2,
+                    "stepKnots": 25,
+                    "supportKnots": 2,
+                }
+            ,
+                "trotting": {
+                    "stepLength": 0.15,
+                    "stepHeight": 0.1,
+                    "timeStep": 1e-2,
+                    "stepKnots": 25,
+                    "supportKnots": 2,
+                }
+            ,
+                "pacing": {
+                    "stepLength": 0.15,
+                    "stepHeight": 0.1,
+                    "timeStep": 1e-2,
+                    "stepKnots": 25,
+                    "supportKnots": 5,
+                }
+            ,
+                "bounding": {
+                    "stepLength": 0.15,
+                    "stepHeight": 0.1,
+                    "timeStep": 1e-2,
+                    "stepKnots": 25,
+                    "supportKnots": 5,
+                }
+            ,
+                "jumping": {
+                    "jumpHeight": 0.15,
+                    "jumpLength": [0.0, 0.3, 0.0],
+                    "timeStep": 1e-2,
+                    "groundKnots": 10,
+                    "flyingKnots": 20,
+                }
+            }
+        if problem_type == "walking":
+            problem =  gait.createWalkingProblem(
+                                x0,
+                                GAITPHASES[problem_type]["stepLength"],
+                                GAITPHASES[problem_type]["stepHeight"],
+                                GAITPHASES[problem_type]["timeStep"],
+                                GAITPHASES[problem_type]["stepKnots"],
+                                GAITPHASES[problem_type]["supportKnots"],
+                            )
+        elif problem_type == "trotting":
+             problem =  gait.createTrottingProblem(
+                                x0,
+                                GAITPHASES[problem_type]["stepLength"],
+                                GAITPHASES[problem_type]["stepHeight"],
+                                GAITPHASES[problem_type]["timeStep"],
+                                GAITPHASES[problem_type]["stepKnots"],
+                                GAITPHASES[problem_type]["supportKnots"],
+                            )
+        else:
+            raise ValueError(f"Problem type '{problem_type}' not implemented.")
+
     else:
         raise ValueError(f"Robot type '{robot_type}' not implemented.")
     
     return problem
+
 
 
                 
