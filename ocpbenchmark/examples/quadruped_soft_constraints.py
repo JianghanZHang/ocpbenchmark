@@ -644,12 +644,14 @@ class SimpleQuadrupedGaitProblem_soft_constraints:
 
         # Creating the cost model for a contact phase
         costModel = crocoddyl.CostModelSum(self.state, nu)
+        constraintModelManager = crocoddyl.ConstraintModelManager(self.state, nu)
+
         if isinstance(comTask, np.ndarray):
             comResidual = crocoddyl.ResidualModelCoMPosition(self.state, comTask, nu)
             comTrack = crocoddyl.CostModelResidual(self.state, comResidual)
             costModel.addCost("comTrack", comTrack, 1e6)
         for i in supportFootIds:
-            cone = crocoddyl.FrictionCone(self.Rsurf, self.mu, 4, False)
+            cone = crocoddyl.FrictionCone(self.Rsurf, self.mu, 16, False)
             coneResidual = crocoddyl.ResidualModelContactFrictionCone(
                 self.state, i, cone, nu, self._fwddyn
             )
@@ -662,6 +664,11 @@ class SimpleQuadrupedGaitProblem_soft_constraints:
             costModel.addCost(
                 self.rmodel.frames[i].name + "_frictionCone", frictionCone, 1e1
             )
+
+            # Add constraints to check feasibility
+            nr = coneResidual.nr
+            constraintFriction = crocoddyl.ConstraintModelResidual(self.state, coneResidual, np.array([0.]*nr), np.array([np.inf]*nr))
+            constraintModelManager.addConstraint(self.rmodel.frames[i].name + "_frictionCone", constraintFriction)
         if swingFootTask is not None:
             for i in swingFootTask:
                 frameTranslationResidual = crocoddyl.ResidualModelFrameTranslation(
@@ -712,17 +719,20 @@ class SimpleQuadrupedGaitProblem_soft_constraints:
         stateBounds = crocoddyl.CostModelResidual(
             self.state, stateBoundsActivation, stateBoundsResidual
         )
-        costModel.addCost("stateBounds", stateBounds, 1e3)
+        constraintState = crocoddyl.ConstraintModelResidual(self.state, stateBoundsResidual, lb, ub)
+        # costModel.addCost("stateBounds", stateBounds, 1e3)
+        # constraintModelManager.addConstraint("stateBounds", constraintState)
 
+        
         # Creating the action model for the KKT dynamics with simpletic Euler
         # integration scheme
         if self._fwddyn:
             dmodel = crocoddyl.DifferentialActionModelContactFwdDynamics(
-                self.state, self.actuation, contactModel, costModel, 0.0, True
+                self.state, self.actuation, contactModel, costModel, constraintModelManager, 0.0, True
             )
         else:
             dmodel = crocoddyl.DifferentialActionModelContactInvDynamics(
-                self.state, self.actuation, contactModel, costModel
+                self.state, self.actuation, contactModel, costModel, constraintModelManager
             )
         if self._control == "one":
             control = crocoddyl.ControlParametrizationModelPolyOne(nu)
@@ -800,8 +810,10 @@ class SimpleQuadrupedGaitProblem_soft_constraints:
 
         # Creating the cost model for a contact phase
         costModel = crocoddyl.CostModelSum(self.state, nu)
+        constraintModelManager = crocoddyl.ConstraintModelManager(self.state, nu)
+
         for i in supportFootIds:
-            cone = crocoddyl.FrictionCone(self.Rsurf, self.mu, 4, False)
+            cone = crocoddyl.FrictionCone(self.Rsurf, self.mu, 16, False)
             coneResidual = crocoddyl.ResidualModelContactFrictionCone(
                 self.state, i, cone, nu, self._fwddyn
             )
@@ -814,6 +826,14 @@ class SimpleQuadrupedGaitProblem_soft_constraints:
             costModel.addCost(
                 self.rmodel.frames[i].name + "_frictionCone", frictionCone, 1e1
             )
+
+            nr = coneResidual.nr
+            constraintFriction = crocoddyl.ConstraintModelResidual(
+                self.state, coneResidual, np.array([0.] * nr), np.array([np.inf] * nr)
+            )
+            constraintModelManager.addConstraint(self.rmodel.frames[i].name + "_frictionCone", constraintFriction)
+ 
+
         if swingFootTask is not None:
             for i in swingFootTask:
                 frameTranslationResidual = crocoddyl.ResidualModelFrameTranslation(
@@ -869,11 +889,11 @@ class SimpleQuadrupedGaitProblem_soft_constraints:
         # integration scheme
         if self._fwddyn:
             dmodel = crocoddyl.DifferentialActionModelContactFwdDynamics(
-                self.state, self.actuation, contactModel, costModel, 0.0, True
+                self.state, self.actuation, contactModel, costModel, constraintModelManager, 0.0, True
             )
         else:
             dmodel = crocoddyl.DifferentialActionModelContactInvDynamics(
-                self.state, self.actuation, contactModel, costModel
+                self.state, self.actuation, contactModel, costModel, constraintModelManager
             )
         if self._integrator == "euler":
             model = crocoddyl.IntegratedActionModelEuler(dmodel, 0.0)
