@@ -1,9 +1,9 @@
 solver : csqp
-max_iter : 100
+max_iter : 1000
 use_filter_line_search : True
 termination_tolerance : 1e-4
-max_qp_iters : 1000
-eps_abs : 1e-6
-eps_rel : 1e-6
+max_qp_iters : 100
+eps_abs : 1e-2
+eps_rel : 1e-2
 
 initial_guess : quasi-static 

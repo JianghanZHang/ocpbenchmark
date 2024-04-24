@@ -1,7 +1,7 @@
 import crocoddyl
 from utils import load_config_file
 
-class Benchmark_callback(crocoddyl.CallbackAbstract):
+class BenchmarkLogger(crocoddyl.CallbackAbstract):
     """
     A callback class to record solver data.
     """
@@ -11,7 +11,7 @@ class Benchmark_callback(crocoddyl.CallbackAbstract):
         self.data = {key: [] for key in self.config.keys()}
 
     def __call__(self, solver):
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         for attr, solver_attr in self.config.items():
             # Check if the solver has the attribute. If not, raise an exception.
             if not hasattr(solver, solver_attr):

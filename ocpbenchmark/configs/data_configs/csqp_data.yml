@@ -1,9 +1,17 @@
-qp_iter : "qp_iters_"
-cost : "get_cost"
-merit : "get_merit"
-ffeas : "get_gap_norm"
-gfeas : "constraint_norm_"
-x_step_norm : "get_xgrad_norm"
-u_step_norm : "get_ugrad_norm"
-step_length : "get_steplength"
-KKT : "KKT_"
+qp_iter : "qp_iters"
+cost : "cost"
+merit : "merit"
+ffeas : "gap_norm"
+gfeas : "constraint_norm"
+
+###############################
+#NEED TO EXPOSE IN MIM_SOLVERS#
+###############################
+
+# x_step_norm : "get_xgrad_norm"
+# u_step_norm : "get_ugrad_norm"
+
+xs : "xs"
+us : "us"
+step_length : "stepLength"
+KKT : "KKT"

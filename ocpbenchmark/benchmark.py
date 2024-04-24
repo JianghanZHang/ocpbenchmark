@@ -3,7 +3,9 @@ import problem
 import plotter
 import utils
 import solver
-from callback import Benchmark_callback
+from callback import BenchmarkLogger
+import mim_solvers
+from examples.quadruped_hard_constraints import plotSolution
 
 
 def make(problem_config, solver_config, data_config):
@@ -34,10 +36,11 @@ class Benchmark:
     def set_callback(self, data_config):
         if self.solver is None:
             raise ValueError("Solver is not set. Please set the solver first.")
-        benchmark_callback = Benchmark_callback(data_config)
+        benchmark_callback = BenchmarkLogger(data_config)
         self.data = benchmark_callback.data
-        self.solver.setCallbacks([benchmark_callback,
-                                  crocoddyl.CallbackVerbose()])
+        # self.solver.setCallbacks(
+        #     [benchmark_callback])
+        #                           mim_solvers.CallbackVerbose()])
 
     def run(self):
         if self.solver is None:
@@ -46,6 +49,6 @@ class Benchmark:
             raise ValueError("Problem is not set. Please set the problem first.")
         
         self.solver.solve(self.xs_init, self.us_init, self.max_iter)
+        plotSolution(self.solver, False)
+        
         return self.data
-
-    

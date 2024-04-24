@@ -1,0 +1,5 @@
+solver : sqp
+
+initial_guess : quasi-static 
+
+max_iter : 100

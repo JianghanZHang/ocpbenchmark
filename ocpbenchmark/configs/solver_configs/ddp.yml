@@ -1,0 +1,5 @@
+solver : ddp
+
+initial_guess : quasi-static 
+
+max_iter : 100
