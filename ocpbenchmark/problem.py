@@ -103,13 +103,23 @@ def make_problem(problem_config):
         # Setting up the 3d walking problem
         lfFoot, rfFoot, lhFoot, rhFoot = "LF_FOOT", "RF_FOOT", "LH_FOOT", "RH_FOOT"
         if dynamics_type == "inv":
-            gait = SimpleQuadrupedGaitProblem_hard_constraints(
-                anymal.model, lfFoot, rfFoot, lhFoot, rhFoot, fwddyn=False
-            )
+            if constraints_type == "hard":
+                gait = SimpleQuadrupedGaitProblem_hard_constraints(
+                    anymal.model, lfFoot, rfFoot, lhFoot, rhFoot, fwddyn=False
+                )
+            elif constraints_type == "soft":
+                gait = SimpleQuadrupedGaitProblem_soft_constraints(
+                    anymal.model, lfFoot, rfFoot, lhFoot, rhFoot, fwddyn=False
+                )
         elif dynamics_type == "fwd":
-            gait = SimpleQuadrupedGaitProblem_hard_constraints(
-                anymal.model, lfFoot, rfFoot, lhFoot, rhFoot, fwddyn=True
-            )
+            if constraints_type == "hard":
+                gait = SimpleQuadrupedGaitProblem_hard_constraints(
+                    anymal.model, lfFoot, rfFoot, lhFoot, rhFoot, fwddyn=True
+                )
+            elif constraints_type == "soft":
+                gait = SimpleQuadrupedGaitProblem_soft_constraints(
+                    anymal.model, lfFoot, rfFoot, lhFoot, rhFoot, fwddyn=True
+                )
         else:
             raise ValueError(f"Dynamics type '{dynamics_type}' not implemented.")
 
@@ -172,6 +182,33 @@ def make_problem(problem_config):
                                 GAITPHASES[problem_type]["timeStep"],
                                 GAITPHASES[problem_type]["stepKnots"],
                                 GAITPHASES[problem_type]["supportKnots"],
+                            )
+        elif problem_type == "pacing":
+            problem = gait.createBoundingProblem(
+                                x0,
+                                GAITPHASES["stepLength"],
+                                GAITPHASES["stepHeight"],
+                                GAITPHASES["timeStep"],
+                                GAITPHASES["stepKnots"],
+                                GAITPHASES["supportKnots"],
+                            )
+        elif problem_type == "jumping":
+            problem = gait.createJumpingProblem(
+                                x0,
+                                GAITPHASES["jumpHeight"],
+                                GAITPHASES["jumpLength"],
+                                GAITPHASES["timeStep"],
+                                GAITPHASES["groundKnots"],
+                                GAITPHASES["flyingKnots"],
+                            )
+        elif problem_type == "bounding":
+            problem = gait.createBoundingProblem(
+                                x0,
+                                GAITPHASES["stepLength"],
+                                GAITPHASES["stepHeight"],
+                                GAITPHASES["timeStep"],
+                                GAITPHASES["stepKnots"],
+                                GAITPHASES["supportKnots"],
                             )
         else:
             raise ValueError(f"Problem type '{problem_type}' not implemented.")
