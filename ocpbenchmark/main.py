@@ -1,6 +1,6 @@
 import benchmark
 import numpy as np
-from plotter import create_plots
+from plotter import plot_data
 
 problem_config, solver_config, data_config =  "problem_configs/" + "quadrupedal_walking_hard", \
                                                               "solver_configs/" + "csqp_merit", \
@@ -8,4 +8,4 @@ problem_config, solver_config, data_config =  "problem_configs/" + "quadrupedal_
 benchmark_ = benchmark.make(problem_config, solver_config, data_config)
 data = benchmark_.run()
 
-import pdb; pdb.set_trace()
+plot = plot_data(data)
