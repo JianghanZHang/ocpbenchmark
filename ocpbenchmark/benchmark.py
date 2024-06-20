@@ -38,17 +38,14 @@ class Benchmark:
             raise ValueError("Solver is not set. Please set the solver first.")
         benchmark_callback = BenchmarkLogger(data_config)
         self.data = benchmark_callback.data
-        # self.solver.setCallbacks(
-        #     [benchmark_callback])
-        #                           mim_solvers.CallbackVerbose()])
+        self.solver.setCallbacks(
+            [benchmark_callback])
 
     def run(self):
         if self.solver is None:
             raise ValueError("Solver is not set. Please set the solver first.")
         if self.problem is None:
             raise ValueError("Problem is not set. Please set the problem first.")
-        
         self.solver.solve(self.xs_init, self.us_init, self.max_iter)
-        plotSolution(self.solver, False)
         
         return self.data
